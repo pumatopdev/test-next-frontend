@@ -34,7 +34,7 @@ const ColorPicker: React.FC<ColorPickProps> = ({ initialColor, onColorChange }) 
   };
 
   return (
-    <div className="flex space-x-4">
+    <div className="w-full flex flex-wrap gap-3">
       {colors.map((color) => (
           <div
             key={color.name}

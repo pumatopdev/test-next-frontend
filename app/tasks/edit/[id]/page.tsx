@@ -3,6 +3,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import ColorPicker from "@/components/ColorPicker"
+import { updateTasks } from "@/utils/api"
+import { Task } from "@/types"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react";
 import React from "react"
@@ -11,13 +13,13 @@ export default function UpdateTask({ params } : { params:Promise<{ id:string }> 
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const title = searchParams.get('title');
-  const color = searchParams.get('color') || '';
-  const completed = searchParams.get('completed');
+  const o_title = searchParams.get('title');
+  const o_color = searchParams.get('color') || '';
+  const o_completed = searchParams.get('completed');
 
-  const [taskTitle, setTaskTitle] = useState(title);
-  const [taskColor, setTaskColor] = useState<string | null> (null);
-  const [taskId, setTaskId] = useState<string | null> (null);
+  const [title, setTaskTitle] = useState(o_title);
+  const [color, setTaskColor] = useState<string | null> (null);
+  const [id, setTaskId] = useState<string | null> (null);
   
   useEffect(() => {
     const fetchParams = async () => {
@@ -25,43 +27,44 @@ export default function UpdateTask({ params } : { params:Promise<{ id:string }> 
       setTaskId(id);
     }
 
-    setTaskTitle(title || "");
-    setTaskColor(color || "bg-c-red");
+    setTaskTitle(o_title || "");
+    setTaskColor(o_color || "bg-c-red");
 
     fetchParams();
-  }, [params, title, color]);
+  }, [params, o_title, o_color]);
 
-  if(!taskId) return <p>Loading...</p>
+  if(!id) return <p>Loading...</p>
 
-  const handleSaveTask = () => {
-    if(!taskTitle || !taskColor){
+  const handleSaveTask = async () => {
+    if(!title || !color){
       alert("Please enter a title and select a color.");
       return;
     }
 
-    const updatedTask = {
-      id: taskId,
-      title: taskTitle,
-      completed: completed,
-      color: taskColor,
-    };
-
-    sessionStorage.setItem("updatedTask", JSON.stringify(updatedTask));
+    let updatedTask: Task;
+    const response = await updateTasks({id, title, color})
+    if(response.success){
+      updatedTask = response.data;
+      sessionStorage.setItem("updatedTask", JSON.stringify(updatedTask));
+    }
+    else{
+      return;
+    }
 
     router.push("/");
   }
 
   return(
     <>
-      <div className="m-auto w-[736] mt-[91]">
-        <div className="float-left w-full">
+      <div className="m-auto max-w-screen-sm md:max-w-screen-md lg:w-[736px] mt-5 md:mt-12">
+        <div className="w-full mb-12">
           <Link href= "/">
             <button className="p-[5px]">
               <Image src="/left.svg" alt="left" width={14} height={14} />
             </button>
           </Link>
         </div>
-        <div className="pt-12 grid w-full">
+        <div className="grid w-full">
           <div className="w-full">
             <label className="text-sm text-sky-header float-left">
               Title
@@ -70,26 +73,26 @@ export default function UpdateTask({ params } : { params:Promise<{ id:string }> 
               placeholder="Ex. Brush your teeth" 
               type="text" 
               name="title"
-              value={taskTitle || ""}
+              value={title || ""}
               onChange={(e)=>setTaskTitle(e.target.value)}
             />
           </div>
-          <div className="mt-6">
+          <div className="mt-6 w-full">
             <label className="text-sm text-sky-header float-left">
               Color
             </label>
           </div>
             
-          <div className="mt-3 float-left">
+          <div className="mt-3 float-left w-full">
             <ColorPicker
-              initialColor={taskColor}
+              initialColor={color}
               onColorChange={(color)=>setTaskColor(color)} />
           </div>
-          <div className="mt-12">
+          <div className="mt-12 w-full">
             <button className="rounded-lg h-auto bg-sky-btn pt-4 pb-4 w-full" onClick={handleSaveTask}>
               <div className="h-5 flex justify-center items-center">
                 <p className="font-inter font-bold text-gray-text mr-2 text-sm">Save</p>
-                <Image src="/plus.svg" alt="create" width={16} height={16} />
+                <Image src="/Vector.svg" alt="create" width={16} height={16} />
               </div>
             </button>
           </div>

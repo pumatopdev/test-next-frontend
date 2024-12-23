@@ -34,7 +34,7 @@ export default function CreateTask(){
 
   return(
     <>
-      <div className="m-auto w-[736] mt-[91]">
+      <div className="m-auto max-w-screen-sm md:max-w-screen-md lg:w-[736] mt-[91]">
         <div className="float-left w-full">
           <Link href= "/">
             <button className="p-[5px]">
@@ -54,17 +54,17 @@ export default function CreateTask(){
               onChange={(e)=>setTaskTitle(e.target.value)}
             />
           </div>
-          <div className="mt-6">
+          <div className="mt-6 w-full">
             <label className="text-sm text-sky-header float-left">
               Color
             </label>
           </div>
             
-          <div className="mt-3 float-left">
+          <div className="mt-3 float-left w-full">
             <ColorPicker
               onColorChange={(color)=>setTaskColor(color)} />
           </div>
-          <div className="mt-12">
+          <div className="mt-12 w-full">
             <button className="rounded-lg h-auto bg-sky-btn pt-4 pb-4 w-full" onClick={handleCreateTask}>
               <div className="h-5 flex justify-center items-center">
                 <p className="font-inter font-bold text-gray-text mr-2 text-sm">Add Task</p>

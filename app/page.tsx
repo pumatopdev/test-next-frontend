@@ -106,7 +106,7 @@ export default function Home(){
 
   return(
     <>
-    <div className="m-auto w-[736px] -mt-10">
+    <div className="m-auto max-w-screen-sm md:max-w-screen-md lg:w-[736px] -mt-10">
       <div className="w-full mb-[66px]">
         <Link href="/tasks/create">
           <button className="rounded-lg h-auto bg-sky-btn pt-4 pb-4 w-full">

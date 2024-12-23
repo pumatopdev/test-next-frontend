@@ -56,9 +56,9 @@ export const createTasks = async(task:{title: string; color: string}) => {
   }
 }
 
-export const updateTasks = async(task:{id: string; title: string; color: string}) => {
+export const updateTasks = async(task: { id: string; title: string; color: string; }) => {
   try {
-    const response = await api.post("/createTasks", task);
+    const response = await api.put(`/updateTasks/${task.id}`, task);
     if(response.data.success){
       return { success:true, data: response.data.data };
     }
