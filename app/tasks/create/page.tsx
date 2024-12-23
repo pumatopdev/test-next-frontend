@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Task } from "@/types"
+import { createTasks } from "@/utils/api"
 import ColorPicker from "@/components/ColorPicker"
 import { useRouter } from "next/navigation"
 import { useState } from "react";
@@ -10,23 +11,25 @@ import { useState } from "react";
 export default function CreateTask(){
   const router = useRouter();
 
-  const [taskTitle, setTaskTitle] = useState('');
-  const [taskColor, setTaskColor] = useState<string | null> (null);
+  const [title, setTaskTitle] = useState('');
+  const [color, setTaskColor] = useState<string | null> (null);
 
-  const handleCreateTask = () => {
-    if(!taskTitle || !taskColor){
+  const handleCreateTask = async() => {
+    if(!title || !color){
       alert("Please enter a title and select a color.");
       return;
     }
 
-    const newTask : Task = {
-      id: crypto.randomUUID(),
-      title: taskTitle,
-      completed: false,
-      color: taskColor,
-    };
+    let newTask : Task;
 
-    router.push(`/?newFlag=true&id=${newTask.id}&title=${newTask.title}&color=${newTask.color}&completed=${newTask.completed}`);
+    const response = await createTasks({title, color});
+    if(response.success){
+      newTask = response.data;
+      router.push(`/?newFlag=true&id=${newTask.id}&title=${newTask.title}&color=${newTask.color}&completed=${newTask.completed}`);
+    }
+    else{
+      return;
+    }    
   }
 
   return(

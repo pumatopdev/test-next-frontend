@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import TaskItem from "@/components/TaskItem";
 import EmptyState from "@/components/EmptyState";
+import { getTasks, deleteTasks } from "@/utils/api";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Task } from "@/types";
@@ -11,51 +12,77 @@ import { Task } from "@/types";
 export default function Home(){
   const searchParams = useSearchParams();
 
-  const [tasks, setTasks] = useState<Task[]>([
-    {id:"abc123", title:"Integer urna interdum massa libero auctor neque turpis turpis semper. Duis vel sed fames integer.", completed:false,  color:"bg-c-red"},
-    {id:"xyz456", title:"Complete project", completed:true, color:"bg-c-yellow"},
-    {id:"zzz333", title:"Call mom", completed:false, color:"bg-c-green"},
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(()=>{
+    // Read from initial tasks
+    const fetchTasks = async() => {
+      try {
+        const response = await getTasks();
+        if(response.success) {
+          setTasks(response.data);
+        }
+        else {
+          console.log(response.message);
+        }
+      } catch (error) {
+        console.error("Failed to fetch tasks", error);
+      }
+    }
 
     // When the new task creation happens.
-    const isNew = searchParams.get("newFlag");
-
-    if(isNew) {
-      const id = searchParams.get("id");
-      const title = searchParams.get("title");
-      const color = searchParams.get("color");
-      const completed = searchParams.get("completed") === "true"; // Convert string to boolean
-      
-      if(id && title && color){
-        const newTask:Task = {
-          id,
-          title,
-          completed,
-          color,
+    const processSearchParams = () => {
+      const isNew = searchParams.get("newFlag");
+  
+      if(isNew) {
+        const id = searchParams.get("id");
+        const title = searchParams.get("title");
+        const color = searchParams.get("color");
+        const completed = searchParams.get("completed") === "true"; // Convert string to boolean
+        
+        if(id && title && color){
+          const newTask:Task = {
+            id,
+            title,
+            completed,
+            color,
+          }
+          setTasks((prevTasks) =>
+            prevTasks.some((task) => task.id === newTask.id)
+              ? prevTasks
+              : [...prevTasks, newTask]
+          );
+        } else {
+          console.error("Invalid task Parametes", {id, title, color});
         }
-        setTasks((prevTasks)=>[...prevTasks, newTask]);
-      } else {
-        console.error("Invalid task Parametes", {id, title, color});
       }
     }
 
     // When the Edit Task happens
-    const storedUpdatedTask = sessionStorage.getItem("updatedTask");
 
-    if(storedUpdatedTask){
-      try {
-        const updated = JSON.parse(storedUpdatedTask);
-        setTasks((prevTasks) => 
-          prevTasks.map((task) => 
-            task.id === updated.id ? {...task, ...updated} : task
+    const processUpdatedTask = () => {
+      const storedUpdatedTask = sessionStorage.getItem("updatedTask");
+  
+      if(storedUpdatedTask){
+        try {
+          const updated = JSON.parse(storedUpdatedTask);
+          setTasks((prevTasks) => 
+            prevTasks.map((task) => 
+              task.id === updated.id ? {...task, ...updated} : task
+            )
           )
-        )
-      } catch (error) {
-        console.error("Error parsing updatedTask from sessionStorage", error);
+        } catch (error) {
+          console.error("Error parsing updatedTask from sessionStorage", error);
+        }
       }
     }
+
+    // Fetch tasks from backend and then handle other task-related updates
+    fetchTasks().then(()=>{
+      processSearchParams();
+      processUpdatedTask()
+    });
+
   }, [searchParams]);
 
 
@@ -67,8 +94,12 @@ export default function Home(){
     );
   };
 
-  const deleteTask = (id:string) => {
-    setTasks((prevTasks)=>prevTasks.filter((task)=>task.id !==id));
+  const deleteTask = async (id:string) => {
+    const response = await deleteTasks(id);
+    if(response.success)
+      setTasks((prevTasks)=>prevTasks.filter((task)=>task.id !==id));
+    else
+      console.log(response.message);
   }
 
   const completedTasks = tasks.filter((task)=>task.completed).length;
