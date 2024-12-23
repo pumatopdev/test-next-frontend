@@ -1,101 +1,129 @@
+"use client"
+
+import Link from "next/link";
 import Image from "next/image";
+import TaskItem from "@/components/TaskItem";
+import EmptyState from "@/components/EmptyState";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Task } from "@/types";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+export default function Home(){
+  const searchParams = useSearchParams();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [tasks, setTasks] = useState<Task[]>([
+    {id:"abc123", title:"Integer urna interdum massa libero auctor neque turpis turpis semper. Duis vel sed fames integer.", completed:false,  color:"bg-c-red"},
+    {id:"xyz456", title:"Complete project", completed:true, color:"bg-c-yellow"},
+    {id:"zzz333", title:"Call mom", completed:false, color:"bg-c-green"},
+  ]);
+
+  useEffect(()=>{
+
+    // When the new task creation happens.
+    const isNew = searchParams.get("newFlag");
+
+    if(isNew) {
+      const id = searchParams.get("id");
+      const title = searchParams.get("title");
+      const color = searchParams.get("color");
+      const completed = searchParams.get("completed") === "true"; // Convert string to boolean
+      
+      if(id && title && color){
+        const newTask:Task = {
+          id,
+          title,
+          completed,
+          color,
+        }
+        setTasks((prevTasks)=>[...prevTasks, newTask]);
+      } else {
+        console.error("Invalid task Parametes", {id, title, color});
+      }
+    }
+
+    // When the Edit Task happens
+    const storedUpdatedTask = sessionStorage.getItem("updatedTask");
+
+    if(storedUpdatedTask){
+      try {
+        const updated = JSON.parse(storedUpdatedTask);
+        setTasks((prevTasks) => 
+          prevTasks.map((task) => 
+            task.id === updated.id ? {...task, ...updated} : task
+          )
+        )
+      } catch (error) {
+        console.error("Error parsing updatedTask from sessionStorage", error);
+      }
+    }
+  }, [searchParams]);
+
+
+  const toggleTaskCompletion  = (id:string, completed:boolean) => {
+    setTasks((prevTasks)=>
+      prevTasks.map((task)=>
+        task.id === id ? {...task, completed} : task
+      )
+    );
+  };
+
+  const deleteTask = (id:string) => {
+    setTasks((prevTasks)=>prevTasks.filter((task)=>task.id !==id));
+  }
+
+  const completedTasks = tasks.filter((task)=>task.completed).length;
+
+  return(
+    <>
+    <div className="m-auto w-[736px] -mt-10">
+      <div className="w-full mb-[66px]">
+        <Link href="/tasks/create">
+          <button className="rounded-lg h-auto bg-sky-btn pt-4 pb-4 w-full">
+            <div className="h-5 flex justify-center items-center">
+              <p className="font-inter font-bold text-gray-text mr-2 text-sm">Create Task</p>
+              <Image src="/plus.svg" alt="create" width={16} height={16} />
+            </div>
+          </button>
+        </Link>
+      </div>
+      <div className="mb-6 flex justify-between w-full">
+          <div>
+            <p className="text-sky-header text-sm">
+              Tasks
+              <span className="rounded-3xl pt-[2px] pb-[2px] px-2 ml-1 bg-gray-round text-white text-xs">
+                {tasks.length}
+              </span>
+            </p>
+          </div>
+          <div>
+            <p className="text-purple-text text-sm">
+              Completed
+              <span className="rounded-3xl pt-[2px] pb-[2px] px-2 ml-1 bg-gray-round text-white text-xs">
+                {completedTasks} de {tasks.length}
+              </span>
+            </p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      {tasks.length?(
+        <>
+          {tasks.map((task)=>(
+            <TaskItem
+              key = {task.id}
+              id = {task.id}
+              title = {task.title}
+              completed = {task.completed}
+              color = {task.color}
+              onToggle = {toggleTaskCompletion}
+              onDelete = {deleteTask}
+            />
+          ))}
+        </>
+      ):(
+        <EmptyState />
+      )}
+    
     </div>
+    </>
   );
 }
